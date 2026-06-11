@@ -4,12 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Proyecto
 
-Diseño arquitectónico de una casa particular en un terreno de **8.66m × 35m**. Los planos son archivos HTML estáticos con SVG inline — se abren directo en el navegador, sin servidor ni build.
+Diseño arquitectónico de una casa particular en un terreno de **8.66m × 35m**. Los planos son archivos HTML estáticos con SVG inline — se abren directo en el navegador, sin servidor ni build. **Leer `README.md` para el contexto del terreno y el porqué de cada decisión de diseño.**
 
-## Archivos
+## Archivos y flujo de trabajo
 
-- `plano_final.html` — Planta Baja + Planta Alta completas con leyenda de columnas
-- `plano_pb_puertas.html` — Solo Planta Baja con puertas y aberturas marcadas (rojo/azul)
+- `partes/` — **acá se edita.** Un fragmento HTML por ambiente/sección, con prefijo numérico que define el orden de armado (`17-pb-bano.html`, `33-pa-dorm-principal.html`, etc.)
+- `armar.sh` — concatena `partes/*.html` → `plano_final.html`. **Correrlo después de cada edición.**
+- `plano_final.html` — archivo GENERADO, no editarlo a mano. Es el que se abre en el navegador / se comparte por WhatsApp
+- `dev.html` — vista en vivo para desarrollo: lee `partes/` directo, checkboxes por ambiente, auto-refresh 1s. Requiere Live Server (http), no funciona con file://. No editarlo salvo que se agreguen/renombren partes (tiene la lista hardcodeada)
+- `README.md` — contexto del terreno, preferencias del dueño y temas pendientes
+- `.claude/skills/dibujar-plano/` — convenciones de dibujo (escala, colores, tamaños estándar)
+
+**Flujo:** editar solo el fragmento del ambiente pedido (ej. "baño PB" → `partes/17-pb-bano.html`) → `./armar.sh` → listo. No hace falta leer el plano completo.
 
 ## Sistema de coordenadas SVG
 
@@ -55,8 +61,8 @@ El norte está arriba (fondo del terreno = patio trasero).
 ### Planta Alta (PA)
 | Zona | Posición (desde calle) | Dimensiones |
 |------|------------------------|-------------|
-| Dorm. Principal | 12m–16m, oeste | 4.14 × 4.00m |
-| Vestidor 1 | 12m–16m, este | 3.10 × 4.00m |
+| Vestidor 1 | 12m–16m, oeste | 3.45 × 4.00m (colchón térmico contra medianera) |
+| Dorm. Principal | 12m–16m, este | 3.50 × 4.00m (cama en pared este, TV en pared oeste) |
 | Escalera U | 8m–12m, oeste | 2.20 × 4.00m |
 | Circulación | 8m–12m, centro | 2.24 × 4.00m |
 | Baño PA | 8m–12m, este | 2.80 × 4.00m |
@@ -71,11 +77,12 @@ El norte está arriba (fondo del terreno = patio trasero).
 - **Naranja** (`#ff7800`) — columnas centrales, cada 4m
 - Las columnas de soporte del Vestidor 2 (naranja + rojo) están a `y=490` (6m)
 
-## Puertas y aberturas (`plano_pb_puertas.html`)
+## Puertas y aberturas (solo PB por ahora)
 
-- **Azul** (`#1565c0`) — ventanales pared norte (~1.80m)
+- **Azul** (`#1565c0`) — ventanas: ventanales pared norte (~1.80m) y ventana baño PB en pared sur (~1.00m)
 - **Rojo** (`#c62828`) — puertas (~28px ≈ 0.82m) y aberturas entre ambientes
 - Aberturas anchas (living↔comedor, cocina↔comedor) se dibujan como hueco en el muro central
+- En PA solo el Dorm Principal tiene aberturas dibujadas: ventana norte y puerta al vestidor (pared oeste, parte sur). También tiene muebles (cama + TV) en `<g id="capa-muebles-pa">`
 
 ## Convenciones SVG
 

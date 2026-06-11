@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEV — Plano en vivo</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Arial, sans-serif; background: #eceff1; display: flex; height: 100vh; }
+  #panel { width: 250px; flex-shrink: 0; background: #263238; color: #eceff1; padding: 12px; overflow-y: auto; font-size: 13px; }
+  #panel h3 { margin: 10px 0 6px; font-size: 12px; color: #80cbc4; text-transform: uppercase; }
+  #panel label { display: block; padding: 3px 4px; cursor: pointer; border-radius: 3px; }
+  #panel label:hover { background: #37474f; }
+  #panel input { margin-right: 6px; }
+  .btns { display: flex; gap: 6px; margin: 8px 0; }
+  .btns button { flex: 1; padding: 5px; border: none; border-radius: 4px; cursor: pointer; background: #455a64; color: white; font-size: 12px; }
+  .btns button:hover { background: #546e7a; }
+  #estado { font-size: 11px; color: #90a4ae; margin-top: 10px; }
+  #vista { flex: 1; border: none; background: #f5f5f5; }
+</style>
+</head>
+<body>
+
+<div id="panel">
+  <h3>Vista en vivo</h3>
+  <label><input type="checkbox" id="auto" checked>Auto-actualizar (1s)</label>
+  <div class="btns">
+    <button onclick="todos(true)">Todos</button>
+    <button onclick="todos(false)">Ninguno</button>
+  </div>
+  <h3>Planta Baja</h3>
+  <div id="grupo-pb"></div>
+  <h3>Planta Alta</h3>
+  <div id="grupo-pa"></div>
+  <div id="estado"></div>
+</div>
+<iframe id="vista"></iframe>
+
+<script>
+// Estructura fija (siempre se incluye) y partes elegibles, en orden de armado.
+const PARTES = [
+  { f: '00-head.html', fija: true },
+  { f: '10-pb-inicio-reglas.html', fija: true },
+  { f: '11-pb-muros-patio-trasero.html', g: 'pb', n: 'Muros + patio trasero' },
+  { f: '12-pb-living.html', g: 'pb', n: 'Living' },
+  { f: '13-pb-comedor.html', g: 'pb', n: 'Comedor' },
+  { f: '14-pb-cocina.html', g: 'pb', n: 'Cocina' },
+  { f: '15-pb-escalera-pasillo.html', g: 'pb', n: 'Escalera + pasillo' },
+  { f: '16-pb-lavadero.html', g: 'pb', n: 'Lavadero' },
+  { f: '17-pb-bano.html', g: 'pb', n: 'Baño' },
+  { f: '18-pb-recibidor.html', g: 'pb', n: 'Recibidor' },
+  { f: '19-pb-garage.html', g: 'pb', n: 'Garage' },
+  { f: '20-pb-patio-delantero-calle.html', g: 'pb', n: 'Patio delantero + calle' },
+  { f: '21-pb-columnas.html', g: 'pb', n: 'Columnas' },
+  { f: '22-pb-puertas-ventanas.html', g: 'pb', n: 'Puertas y ventanas' },
+  { f: '23-pb-muebles.html', g: 'pb', n: 'Muebles' },
+  { f: '29-pb-fin.html', fija: true },
+  { f: '30-pa-inicio-reglas.html', fija: true },
+  { f: '31-pa-muros-patio.html', g: 'pa', n: 'Muros + patio' },
+  { f: '32-pa-vestidor1.html', g: 'pa', n: 'Vestidor 1' },
+  { f: '33-pa-dorm-principal.html', g: 'pa', n: 'Dorm. Principal' },
+  { f: '34-pa-escalera-circulacion.html', g: 'pa', n: 'Escalera + circulación' },
+  { f: '35-pa-bano.html', g: 'pa', n: 'Baño' },
+  { f: '36-pa-dorm2.html', g: 'pa', n: 'Dorm. 2' },
+  { f: '37-pa-vestidor2.html', g: 'pa', n: 'Vestidor 2' },
+  { f: '38-pa-sin-losa-calle.html', g: 'pa', n: 'Sin losa + calle' },
+  { f: '39-pa-columnas.html', g: 'pa', n: 'Columnas' },
+  { f: '49-pa-fin.html', fija: true },
+  { f: '90-leyenda.html', fija: true }
+];
+
+// crear checkboxes
+PARTES.filter(p => !p.fija).forEach((p, i) => {
+  const cont = document.getElementById('grupo-' + p.g);
+  const lab = document.createElement('label');
+  lab.innerHTML = '<input type="checkbox" checked data-f="' + p.f + '">' + p.n;
+  cont.appendChild(lab);
+});
+
+function todos(v) {
+  document.querySelectorAll('input[data-f]').forEach(c => c.checked = v);
+  armar();
+}
+
+let ultimo = '';
+async function armar() {
+  const activos = new Set(
+    Array.from(document.querySelectorAll('input[data-f]:checked')).map(c => c.dataset.f)
+  );
+  try {
+    const textos = await Promise.all(
+      PARTES.map(p =>
+        (p.fija || activos.has(p.f))
+          ? fetch('partes/' + p.f + '?t=' + Date.now()).then(r => r.text())
+          : Promise.resolve('')
+      )
+    );
+    const html = textos.join('');
+    if (html !== ultimo) {
+      ultimo = html;
+      document.getElementById('vista').srcdoc = html;
+      document.getElementById('estado').textContent =
+        'Actualizado ' + new Date().toLocaleTimeString();
+    }
+  } catch (e) {
+    document.getElementById('estado').textContent =
+      'Error leyendo partes/ — ¿estás usando Live Server (http)?';
+  }
+}
+
+document.getElementById('panel').addEventListener('change', armar);
+setInterval(() => { if (document.getElementById('auto').checked) armar(); }, 1000);
+armar();
+</script>
+</body>
+</html>
