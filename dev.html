@@ -5,92 +5,136 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DEV — Plano en vivo</title>
 <style>
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: Arial, sans-serif; background: #eceff1; display: flex; height: 100vh; }
-  #panel { width: 250px; flex-shrink: 0; background: #263238; color: #eceff1; padding: 12px; overflow-y: auto; font-size: 13px; }
-  #panel h3 { margin: 10px 0 6px; font-size: 12px; color: #80cbc4; text-transform: uppercase; }
-  #panel label { display: block; padding: 3px 4px; cursor: pointer; border-radius: 3px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #eceff1; display: flex; height: 100vh; overflow: hidden; }
+  #panel { width: 220px; flex-shrink: 0; background: #263238; color: #eceff1; padding: 10px; overflow-y: auto; font-size: 12px; }
+  #panel h3 { font-size: 10px; color: #80cbc4; text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 5px; padding-bottom: 3px; border-bottom: 1px solid #37474f; }
+  #panel h3:first-child { margin-top: 0; }
+  #panel label { display: flex; align-items: center; gap: 6px; padding: 3px 4px; cursor: pointer; border-radius: 3px; }
   #panel label:hover { background: #37474f; }
-  #panel input { margin-right: 6px; }
-  .btns { display: flex; gap: 6px; margin: 8px 0; }
-  .btns button { flex: 1; padding: 5px; border: none; border-radius: 4px; cursor: pointer; background: #455a64; color: white; font-size: 12px; }
+  .capa-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .btns { display: flex; gap: 4px; margin: 5px 0; }
+  .btns button { flex: 1; padding: 4px; border: none; border-radius: 3px; cursor: pointer; background: #455a64; color: #cfd8dc; font-size: 11px; }
   .btns button:hover { background: #546e7a; }
-  #estado { font-size: 11px; color: #90a4ae; margin-top: 10px; }
+  #estado { font-size: 10px; color: #546e7a; margin-top: 10px; padding-top: 8px; border-top: 1px solid #37474f; }
   #vista { flex: 1; border: none; background: #f5f5f5; }
+  .sin-datos { color: #546e7a; font-style: italic; font-size: 11px; padding: 2px 4px; }
 </style>
 </head>
 <body>
 
 <div id="panel">
-  <h3>Vista en vivo</h3>
-  <label><input type="checkbox" id="auto" checked>Auto-actualizar (1s)</label>
-  <div class="btns">
-    <button onclick="todos(true)">Todos</button>
-    <button onclick="todos(false)">Ninguno</button>
-  </div>
+
+  <!-- CAPAS -->
+  <h3>Capas</h3>
+  <label><input type="checkbox" data-capa="estructura" checked><span class="capa-dot" style="background:#78909c"></span>Estructura</label>
+  <label><input type="checkbox" data-capa="muebles" checked><span class="capa-dot" style="background:#8d6e63"></span>Muebles</label>
+  <label><input type="checkbox" data-capa="canerias"><span class="capa-dot" style="background:#0288d1"></span>Cañerías</label>
+  <label><input type="checkbox" data-capa="electricidad"><span class="capa-dot" style="background:#fbc02d"></span>Electricidad</label>
+
+  <!-- AMBIENTES PB -->
   <h3>Planta Baja</h3>
-  <div id="grupo-pb"></div>
+  <div class="btns">
+    <button onclick="todosAmb('pb', true)">Todos</button>
+    <button onclick="todosAmb('pb', false)">Ninguno</button>
+  </div>
+  <label><input type="checkbox" data-amb="living" data-planta="pb" checked>Living</label>
+  <label><input type="checkbox" data-amb="comedor" data-planta="pb" checked>Comedor</label>
+  <label><input type="checkbox" data-amb="cocina" data-planta="pb" checked>Cocina</label>
+  <label><input type="checkbox" data-amb="escalera" data-planta="pb" checked>Escalera</label>
+  <label><input type="checkbox" data-amb="lavadero" data-planta="pb" checked>Lavadero</label>
+  <label><input type="checkbox" data-amb="bano-pb" data-planta="pb" checked>Baño</label>
+  <label><input type="checkbox" data-amb="recibidor" data-planta="pb" checked>Recibidor</label>
+  <label><input type="checkbox" data-amb="garage" data-planta="pb" checked>Garage</label>
+
+  <!-- AMBIENTES PA -->
   <h3>Planta Alta</h3>
-  <div id="grupo-pa"></div>
-  <div id="estado"></div>
+  <div class="btns">
+    <button onclick="todosAmb('pa', true)">Todos</button>
+    <button onclick="todosAmb('pa', false)">Ninguno</button>
+  </div>
+  <label><input type="checkbox" data-amb="vestidor1" data-planta="pa" checked>Vestidor 1</label>
+  <label><input type="checkbox" data-amb="dorm-principal" data-planta="pa" checked>Dorm. Principal</label>
+  <label><input type="checkbox" data-amb="escalera-pa" data-planta="pa" checked>Escalera</label>
+  <label><input type="checkbox" data-amb="circulacion" data-planta="pa" checked>Circulación</label>
+  <label><input type="checkbox" data-amb="bano-pa" data-planta="pa" checked>Baño</label>
+  <label><input type="checkbox" data-amb="dorm2" data-planta="pa" checked>Dorm. 2</label>
+  <label><input type="checkbox" data-amb="vestidor2" data-planta="pa" checked>Vestidor 2</label>
+
+  <div id="estado">Cargando…</div>
 </div>
+
 <iframe id="vista"></iframe>
 
 <script>
-// Estructura fija (siempre se incluye) y partes elegibles, en orden de armado.
+// fija: siempre incluida
+// amb: array de ambientes, capa: string
 const PARTES = [
   { f: '00-head.html', fija: true },
   { f: '10-pb-inicio-reglas.html', fija: true },
-  { f: '11-pb-muros-patio-trasero.html', g: 'pb', n: 'Muros + patio trasero' },
-  { f: '12-pb-living.html', g: 'pb', n: 'Living' },
-  { f: '13-pb-comedor.html', g: 'pb', n: 'Comedor' },
-  { f: '14-pb-cocina.html', g: 'pb', n: 'Cocina' },
-  { f: '15-pb-escalera-pasillo.html', g: 'pb', n: 'Escalera + pasillo' },
-  { f: '16-pb-lavadero.html', g: 'pb', n: 'Lavadero' },
-  { f: '17-pb-bano.html', g: 'pb', n: 'Baño' },
-  { f: '18-pb-recibidor.html', g: 'pb', n: 'Recibidor' },
-  { f: '19-pb-garage.html', g: 'pb', n: 'Garage' },
-  { f: '20-pb-patio-delantero-calle.html', g: 'pb', n: 'Patio delantero + calle' },
-  { f: '21-pb-columnas.html', g: 'pb', n: 'Columnas' },
-  { f: '22-pb-puertas-ventanas.html', g: 'pb', n: 'Puertas y ventanas' },
-  { f: '23-pb-muebles.html', g: 'pb', n: 'Muebles' },
-  { f: '29-pb-fin.html', fija: true },
-  { f: '30-pa-inicio-reglas.html', fija: true },
-  { f: '31-pa-muros-patio.html', g: 'pa', n: 'Muros + patio' },
-  { f: '32-pa-vestidor1.html', g: 'pa', n: 'Vestidor 1' },
-  { f: '33-pa-dorm-principal.html', g: 'pa', n: 'Dorm. Principal' },
-  { f: '34-pa-escalera-circulacion.html', g: 'pa', n: 'Escalera + circulación' },
-  { f: '35-pa-bano.html', g: 'pa', n: 'Baño' },
-  { f: '36-pa-dorm2.html', g: 'pa', n: 'Dorm. 2' },
-  { f: '37-pa-vestidor2.html', g: 'pa', n: 'Vestidor 2' },
-  { f: '38-pa-sin-losa-calle.html', g: 'pa', n: 'Sin losa + calle' },
-  { f: '39-pa-columnas.html', g: 'pa', n: 'Columnas' },
-  { f: '49-pa-fin.html', fija: true },
-  { f: '90-leyenda.html', fija: true }
+  { f: '11-pb-muros-patio-trasero.html', fija: true },
+  { f: '12-pb-living.html',            amb: ['living'],         capa: 'estructura' },
+  { f: '13-pb-comedor.html',           amb: ['comedor'],        capa: 'estructura' },
+  { f: '14-pb-cocina.html',            amb: ['cocina'],         capa: 'estructura' },
+  { f: '15-pb-escalera-pasillo.html',  amb: ['escalera'],       capa: 'estructura' },
+  { f: '16-pb-lavadero.html',          amb: ['lavadero'],       capa: 'estructura' },
+  { f: '17-pb-bano.html',              amb: ['bano-pb'],        capa: 'estructura' },
+  { f: '18-pb-recibidor.html',         amb: ['recibidor'],      capa: 'estructura' },
+  { f: '19-pb-garage.html',            amb: ['garage'],         capa: 'estructura' },
+  { f: '20-pb-patio-delantero-calle.html', fija: true },
+  { f: '21-pb-columnas.html',          fija: true },
+  { f: '22-pb-puertas-ventanas.html',  fija: true },
+  { f: '23-pb-muebles-bano.html',       amb: ['bano-pb'],        capa: 'muebles' },
+  { f: '23-pb-muebles-cocina.html',    amb: ['cocina'],         capa: 'muebles' },
+  { f: '23-pb-muebles-comedor.html',   amb: ['comedor'],        capa: 'muebles' },
+  { f: '23-pb-muebles-lavadero.html',  amb: ['lavadero'],       capa: 'muebles' },
+  { f: '23-pb-muebles-living.html',    amb: ['living'],         capa: 'muebles' },
+  { f: '24-pb-canerias-lavadero.html', amb: ['lavadero'],       capa: 'canerias' },
+  { f: '29-pb-fin.html',               fija: true },
+  { f: '30-pa-inicio-reglas.html',     fija: true },
+  { f: '31-pa-muros-patio.html',       fija: true },
+  { f: '32-pa-vestidor1.html',         amb: ['vestidor1'],      capa: 'estructura' },
+  { f: '33-pa-dorm-principal.html',    amb: ['dorm-principal'], capa: 'estructura' },
+  { f: '33-pa-muebles-dorm-principal.html', amb: ['dorm-principal'], capa: 'muebles' },
+  { f: '34-pa-escalera-circulacion.html', amb: ['escalera-pa', 'circulacion'], capa: 'estructura' },
+  { f: '35-pa-bano.html',              amb: ['bano-pa'],        capa: 'estructura' },
+  { f: '35-pa-canerias-bano.html',    amb: ['bano-pa'],        capa: 'canerias' },
+  { f: '36-pa-dorm2.html',             amb: ['dorm2'],          capa: 'estructura' },
+  { f: '37-pa-vestidor2.html',         amb: ['vestidor2'],      capa: 'estructura' },
+  { f: '38-pa-sin-losa-calle.html',    fija: true },
+  { f: '39-pa-columnas.html',          fija: true },
+  { f: '49-pa-fin.html',               fija: true },
+  { f: '90-leyenda.html',              fija: true }
 ];
 
-// crear checkboxes
-PARTES.filter(p => !p.fija).forEach((p, i) => {
-  const cont = document.getElementById('grupo-' + p.g);
-  const lab = document.createElement('label');
-  lab.innerHTML = '<input type="checkbox" checked data-f="' + p.f + '">' + p.n;
-  cont.appendChild(lab);
-});
+function estadoCapas() {
+  const r = {};
+  document.querySelectorAll('[data-capa]').forEach(c => r[c.dataset.capa] = c.checked);
+  return r;
+}
+function estadoAmbs() {
+  const r = {};
+  document.querySelectorAll('[data-amb]').forEach(c => r[c.dataset.amb] = c.checked);
+  return r;
+}
+function incluir(p, capas, ambs) {
+  if (p.fija) return true;
+  if (!capas[p.capa]) return false;
+  return p.amb.some(a => ambs[a]);
+}
 
-function todos(v) {
-  document.querySelectorAll('input[data-f]').forEach(c => c.checked = v);
+function todosAmb(planta, val) {
+  document.querySelectorAll('[data-planta="' + planta + '"]').forEach(c => c.checked = val);
   armar();
 }
 
 let ultimo = '';
 async function armar() {
-  const activos = new Set(
-    Array.from(document.querySelectorAll('input[data-f]:checked')).map(c => c.dataset.f)
-  );
+  const capas = estadoCapas(), ambs = estadoAmbs();
   try {
     const textos = await Promise.all(
       PARTES.map(p =>
-        (p.fija || activos.has(p.f))
+        incluir(p, capas, ambs)
           ? fetch('partes/' + p.f + '?t=' + Date.now()).then(r => r.text())
           : Promise.resolve('')
       )
@@ -99,17 +143,15 @@ async function armar() {
     if (html !== ultimo) {
       ultimo = html;
       document.getElementById('vista').srcdoc = html;
-      document.getElementById('estado').textContent =
-        'Actualizado ' + new Date().toLocaleTimeString();
+      document.getElementById('estado').textContent = 'Actualizado ' + new Date().toLocaleTimeString();
     }
-  } catch (e) {
-    document.getElementById('estado').textContent =
-      'Error leyendo partes/ — ¿estás usando Live Server (http)?';
+  } catch(e) {
+    document.getElementById('estado').textContent = 'Error — ¿Live Server activo?';
   }
 }
 
 document.getElementById('panel').addEventListener('change', armar);
-setInterval(() => { if (document.getElementById('auto').checked) armar(); }, 1000);
+setInterval(armar, 1000);
 armar();
 </script>
 </body>
