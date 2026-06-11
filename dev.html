@@ -57,6 +57,7 @@
   <label><input type="checkbox" data-amb="dorm-principal" data-planta="pa" checked>Dorm. Principal</label>
   <label><input type="checkbox" data-amb="escalera-pa" data-planta="pa" checked>Escalera</label>
   <label><input type="checkbox" data-amb="circulacion" data-planta="pa" checked>Circulación</label>
+  <label><input type="checkbox" data-amb="homeoffice-pa" data-planta="pa" checked>Oficina</label>
   <label><input type="checkbox" data-amb="bano-pa" data-planta="pa" checked>Baño</label>
   <label><input type="checkbox" data-amb="dorm2" data-planta="pa" checked>Dorm. 2</label>
   <label><input type="checkbox" data-amb="vestidor2" data-planta="pa" checked>Vestidor 2</label>
@@ -94,9 +95,12 @@ const PARTES = [
   { f: '30-pa-inicio-reglas.html',     fija: true },
   { f: '31-pa-muros-patio.html',       fija: true },
   { f: '32-pa-vestidor1.html',         amb: ['vestidor1'],      capa: 'estructura' },
+  { f: '32-pa-muebles-vestidor1.html', amb: ['vestidor1'],      capa: 'muebles' },
   { f: '33-pa-dorm-principal.html',    amb: ['dorm-principal'], capa: 'estructura' },
   { f: '33-pa-muebles-dorm-principal.html', amb: ['dorm-principal'], capa: 'muebles' },
   { f: '34-pa-escalera-circulacion.html', amb: ['escalera-pa', 'circulacion'], capa: 'estructura' },
+  { f: '35-pa-homeoffice.html',        amb: ['homeoffice-pa'],  capa: 'estructura' },
+  { f: '35-pa-muebles-homeoffice.html', amb: ['homeoffice-pa'], capa: 'muebles' },
   { f: '35-pa-bano.html',              amb: ['bano-pa'],        capa: 'estructura' },
   { f: '35-pa-muebles-bano.html',     amb: ['bano-pa'],        capa: 'muebles' },
   { f: '35-pa-canerias-bano.html',    amb: ['bano-pa'],        capa: 'canerias' },
